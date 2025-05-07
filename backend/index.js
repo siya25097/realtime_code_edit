@@ -7,6 +7,23 @@ import axios from 'axios'
 
 const app =express();
 const server=http.createServer(app);
+
+const url = `https://realtime-code-editor-final.onrender.com`;
+const interval = 30000;
+
+function reloadWebsite() {
+  axios
+    .get(url)
+    .then((response) => {
+      console.log("website reloded");
+    })
+    .catch((error) => {
+      console.error(`Error : ${error.message}`);
+    });
+}
+
+setInterval(reloadWebsite, interval);
+
 const io=new Server(server,{
     cors:{
         origin:"*",//can be used anywhere
@@ -60,25 +77,38 @@ io.on("connection",(socket)=>{
         io.to(roomId).emit("languageUpdate", language);
       });
 
+      function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
       socket.on("compileCode", async ({ code, roomId, language, version }) => {
         if (rooms.has(roomId)) {
           const room = rooms.get(roomId);
-          const response = await axios.post(
-            "https://emkc.org/api/v2/piston/execute",
-            {
-              language,
-              version,
-              files: [
-                {
-                  content: code,
-                },
-              ],
-            }
-          );
+          try {
+                    // Implementing delay of 200ms before each API call to prevent rate-limiting
+                await sleep(200);
+                    
+                const response = await axios.post(
+                    "https://emkc.org/api/v2/piston/execute",
+                    {
+                    language,
+                    version,
+                    files: [
+                        {
+                        content: code,
+                        },
+                    ],
+                    }
+                );
     
-          room.output = response.data.run.output;
-          io.to(roomId).emit("codeResponse", response.data);
-        }
+            room.output = response.data.run.output;
+            io.to(roomId).emit("codeResponse", response.data);
+            }
+        catch (error) { 
+                console.error("Error during code compilation:", error);
+                socket.emit("error", "Error compiling code. Please try again later.");
+            }
+         }
       });
     
     socket.on("disconnect", () => {
