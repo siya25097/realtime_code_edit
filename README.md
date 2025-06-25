@@ -21,3 +21,8 @@ Tired of coding alone? **CodeSync** is your virtual coding dojo where developers
 
 **Backend:**  
  Node.js |  Express |  Socket.io  
+
+
+![Home Page](images/img1.png)
+![ROOM LOGIN](images/img2.png)
+![MAIN ROOM](images/img3.png)
